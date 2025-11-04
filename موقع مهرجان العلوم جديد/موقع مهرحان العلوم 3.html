@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>مهرجان العلوم - مولّد وقارئ QR</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+  <style>
+    body {
+      font-family: "Cairo", sans-serif;
+      background: linear-gradient(180deg, #0d47a1, #1976d2, #42a5f5);
+      color: white;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      text-align: center;
+      padding: 25px 10px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+
+    h1 {
+      font-size: 30px;
+      margin: 0;
+      font-weight: 700;
+    }
+
+    main {
+      padding: 25px 10px 50px;
+    }
+
+    section {
+      background: #ffffff;
+      color: #0d47a1;
+      border-radius: 14px;
+      padding: 25px;
+      margin: 25px auto;
+      width: 90%;
+      max-width: 450px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 22px;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #1976d2;
+      padding-bottom: 5px;
+    }
+
+    #reader {
+      width: 100%;
+      margin: auto;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    input, button, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      background-color: #1565c0;
+      transform: scale(1.03);
+    }
+
+    #result, #file-result {
+      margin-top: 12px;
+      font-weight: 600;
+      text-align: center;
+      min-height: 1.2em;
+    }
+
+    .row-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    #preview-img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-top: 10px;
+      display: none;
+      border: 1px solid #ccc;
+    }
+
+    a.contact-link {
+      text-decoration: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      display: block;
+      text-align: center;
+    }
+
+    a.whatsapp { background-color: #25D366; color: white; }
+    a.instagram { background-color: #E1306C; color: white; }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+      color: #bbdefb;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>مهرجان العلوم - مولّد وقارئ QR</h1>
+  </header>
+
+  <main>
+    <section>
+      <h2>قراءة QR بالكاميرا</h2>
+      <div id="reader"></div>
+      <div id="result">وجّه الكاميرا نحو الكود</div>
+      <div class="row-buttons">
+        <button id="start-scan">بدء المسح</button>
+        <button id="stop-scan">إيقاف</button>
+      </div>
+      <p style="font-size:13px; text-align:center; color:#1976d2;">الكاميرا تعمل فقط عبر HTTPS أو على localhost</p>
+    </section>
+
+    <section>
+      <h2>قراءة QR من صورة</h2>
+      <input id="file-input" type="file" accept="image/*" />
+      <button id="decode-file-btn">قراءة الصورة</button>
+      <img id="preview-img" alt="معاينة الصورة" />
+      <div id="file-result"></div>
+    </section>
+
+    <section>
+      <h2>إنشاء QR كود</h2>
+      <textarea id="qr-text" placeholder="اكتب النص أو الرابط هنا..." rows="3"></textarea>
+      <button id="generate-btn">إنشاء الكود</button>
+      <div id="qrcode" style="margin-top: 20px; text-align:center;"></div>
+    </section>
+
+    <section>
+      <h2>تواصل معنا</h2>
+      <a href="https://wa.me/96894746020" class="contact-link whatsapp" target="_blank">واتساب: +968 94746020</a>
+      <a href="https://www.instagram.com/r2_fe3" class="contact-link instagram" target="_blank">إنستغرام: @r2_fe3</a>
+    </section>
+  </main>
+
+  <footer>© 2025 مهرجان العلوم</footer>
+
+  <script>
+    const resultEl = document.getElementById("result");
+    let html5QrCode = null, isScanning = false;
+
+    function onScanSuccess(decodedText) {
+      resultEl.innerText = "نتيجة المسح: " + decodedText;
+    }
+
+    function onScanFailure() {}
+
+    async function startScanning() {
+      if (isScanning) return;
+      resultEl.innerText = "جارٍ تفعيل الكاميرا...";
+      html5QrCode = new Html5Qrcode("reader");
+      const config = { fps: 10, qrbox: 250 };
+      try {
+        await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure);
+        isScanning = true;
+        resultEl.innerText = "وجّه الكاميرا نحو الكود";
+      } catch {
+        resultEl.innerText = "تعذّر الوصول إلى الكاميرا. تأكد من الأذونات أو HTTPS.";
+      }
+    }
+
+    async function stopScanning() {
+      if (!isScanning || !html5QrCode) return;
+      try {
+        await html5QrCode.stop();
+      } catch {}
+      html5QrCode.clear();
+      html5QrCode = null;
+      isScanning = false;
+      resultEl.innerText = "تم إيقاف المسح.";
+    }
+
+    document.getElementById("start-scan").addEventListener("click", startScanning);
+    document.getElementById("stop-scan").addEventListener("click", stopScanning);
+
+    const fileInput = document.getElementById("file-input");
+    const decodeFileBtn = document.getElementById("decode-file-btn");
+    const previewImg = document.getElementById("preview-img");
+    const fileResult = document.getElementById("file-result");
+
+    decodeFileBtn.addEventListener("click", () => {
+      const file = fileInput.files[0];
+      if (!file) {
+        fileResult.innerText = "الرجاء اختيار صورة أولاً.";
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          const [w, h] = [img.width, img.height];
+          canvas.width = w; canvas.height = h;
+          ctx.drawImage(img, 0, 0, w, h);
+          const imageData = ctx.getImageData(0, 0, w, h);
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          previewImg.src = e.target.result;
+          previewImg.style.display = "block";
+          fileResult.innerText = code ? "نتيجة المسح: " + code.data : "لم يتم العثور على QR في الصورة.";
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("generate-btn").addEventListener("click", () => {
+      const text = document.getElementById("qr-text").value.trim();
+      const container = document.getElementById("qrcode");
+      container.innerHTML = "";
+      if (!text) {
+        container.innerHTML = "<p style='color:#c62828;'>الرجاء إدخال نص أو رابط.</p>";
+        return;
+      }
+      new QRCode(container, {
+        text,
+        width: 220,
+        height: 220,
+        colorDark: "#0d47a1",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    });
+
+    window.addEventListener("beforeunload", async () => {
+      if (isScanning && html5QrCode) {
+        try { await html5QrCode.stop(); } catch {}
+      }
+    });
+  </script>
+</body>
+</html>
